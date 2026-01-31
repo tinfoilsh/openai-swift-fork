@@ -11,6 +11,10 @@ extension KeyedDecodingContainer {
     func decodeString(forKey key: KeyedDecodingContainer<K>.Key, parsingOptions: ParsingOptions) throws -> String {
         try self.decode(String.self, forKey: key, parsingOptions: parsingOptions, defaultValue: "")
     }
+
+    func decodeStringIfPresent(forKey key: KeyedDecodingContainer<K>.Key, parsingOptions: ParsingOptions) throws -> String? {
+        try self.decodeIfPresent(String.self, forKey: key)
+    }
     
     func decodeTimeInterval(forKey key: KeyedDecodingContainer<K>.Key, parsingOptions: ParsingOptions) throws -> TimeInterval {
         try self.decode(TimeInterval.self, forKey: key, parsingOptions: parsingOptions, defaultValue: 0)

@@ -168,20 +168,20 @@ public struct ChatStreamResult: Codable, Equatable, Sendable {
     }
 
     /// A unique identifier for the chat completion. Each chunk has the same ID.
-    public let id: String
+    public let id: String?
 
     /// The object type, which is always `chat.completion.chunk`.
-    public let object: String
+    public let object: String?
 
     /// The Unix timestamp (in seconds) of when the chat completion was created. Each chunk has the same timestamp.
-    public let created: TimeInterval
+    public let created: TimeInterval?
 
     /// The model to generate the completion.
-    public let model: String
-    
+    public let model: String?
+
     /// A list of chat completion choices. Can contain more than one element if `n` is greater than 1.
     /// Can also be empty for the last chunk if you set `stream_options: {"include_usage": true}`.
-    public let choices: [Choice]
+    public let choices: [Choice]?
     
     /// This fingerprint represents the backend configuration that the model runs with.
     /// Can be used in conjunction with the `seed` request parameter to understand when backend changes
@@ -228,12 +228,12 @@ public struct ChatStreamResult: Codable, Equatable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let parsingOptions = decoder.userInfo[.parsingOptions] as? ParsingOptions ?? []
         
-        self.id = try container.decodeString(forKey: .id, parsingOptions: parsingOptions)
-        self.object = try container.decodeString(forKey: .object, parsingOptions: parsingOptions)
-        self.created = try container.decode(TimeInterval.self, forKey: .created)
-        self.model = try container.decodeString(forKey: .model, parsingOptions: parsingOptions)
+        self.id = try container.decodeStringIfPresent(forKey: .id, parsingOptions: parsingOptions)
+        self.object = try container.decodeStringIfPresent(forKey: .object, parsingOptions: parsingOptions)
+        self.created = try container.decodeIfPresent(TimeInterval.self, forKey: .created)
+        self.model = try container.decodeStringIfPresent(forKey: .model, parsingOptions: parsingOptions)
         self.citations = try container.decodeIfPresent([String].self, forKey: .citations)
-        self.choices = try container.decode([ChatStreamResult.Choice].self, forKey: .choices)
+        self.choices = try container.decodeIfPresent([ChatStreamResult.Choice].self, forKey: .choices)
         self.systemFingerprint = try container.decodeIfPresent(String.self, forKey: .systemFingerprint)
         
         // Even though API Reference declares that usage field should be either informative or null: https://platform.openai.com/docs/api-reference/chat/create#chat-create-stream_options
