@@ -24,7 +24,7 @@ extension URLRequestBuildable {
         configuration: OpenAI.Configuration
     ) throws -> URLRequest {
         try build(
-            token: configuration.token,
+            token: configuration.resolveToken(),
             organizationIdentifier: configuration.organizationIdentifier,
             timeoutInterval: configuration.timeoutInterval,
             customHeaders: configuration.customHeaders

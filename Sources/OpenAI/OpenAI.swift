@@ -20,6 +20,14 @@ final public class OpenAI: OpenAIProtocol, @unchecked Sendable {
         /// Default value is nil. It would work when you have a proxy server that manages authentication.
         /// See https://github.com/MacPaw/OpenAI/discussions/116 for more info
         public let token: String?
+
+        /// Optional dynamic token provider. When set, its non-nil return value
+        /// is used for the `Authorization` header on every request, taking
+        /// precedence over the static `token`. This lets a rotating bearer
+        /// (e.g. a short-lived JWT) be refreshed without rebuilding the client.
+        /// Returning nil falls back to `token`. The closure is invoked
+        /// synchronously while building each request, so it must not block.
+        public let tokenProvider: (@Sendable () -> String?)?
         
         /// Optional OpenAI organization identifier. See https://platform.openai.com/docs/api-reference/authentication
         public let organizationIdentifier: String?
@@ -47,8 +55,9 @@ final public class OpenAI: OpenAIProtocol, @unchecked Sendable {
         
         public let parsingOptions: ParsingOptions
         
-        public init(token: String?, organizationIdentifier: String? = nil, host: String = "api.openai.com", port: Int = 443, scheme: String = "https", basePath: String = "/v1", timeoutInterval: TimeInterval = 60.0, customHeaders: [String: String] = [:], parsingOptions: ParsingOptions = []) {
+        public init(token: String?, tokenProvider: (@Sendable () -> String?)? = nil, organizationIdentifier: String? = nil, host: String = "api.openai.com", port: Int = 443, scheme: String = "https", basePath: String = "/v1", timeoutInterval: TimeInterval = 60.0, customHeaders: [String: String] = [:], parsingOptions: ParsingOptions = []) {
             self.token = token
+            self.tokenProvider = tokenProvider
             self.organizationIdentifier = organizationIdentifier
             self.host = host
             self.port = port
@@ -57,6 +66,13 @@ final public class OpenAI: OpenAIProtocol, @unchecked Sendable {
             self.timeoutInterval = timeoutInterval
             self.customHeaders = customHeaders
             self.parsingOptions = parsingOptions
+        }
+
+        /// The bearer token to authorize the current request with: the dynamic
+        /// `tokenProvider`'s value when it returns a non-nil token, otherwise the
+        /// static `token`.
+        func resolveToken() -> String? {
+            tokenProvider?() ?? token
         }
     }
     
