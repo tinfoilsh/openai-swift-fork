@@ -187,6 +187,143 @@ struct ChatQueryCodingTests {
         #expect(try equal(query, expected))
     }
 
+    @Test func encodeFunctionDefinitionExtraMergesSiblingFields() throws {
+        let query = ChatQuery(
+            messages: [],
+            model: .gpt4_o,
+            tools: [
+                .init(function: .init(
+                    name: "vendor_tool",
+                    description: "A tool with vendor metadata.",
+                    parameters: nil,
+                    strict: nil,
+                    extra: [
+                        "x_vendor_flag": .bool(true),
+                    ]
+                )),
+            ],
+            stream: false
+        )
+
+        let expected = """
+        {
+            "model": "gpt-4o",
+            "messages": [],
+            "stream": false,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "vendor_tool",
+                        "description": "A tool with vendor metadata.",
+                        "x_vendor_flag": true
+                    }
+                }
+            ]
+        }
+        """
+
+        #expect(try equal(query, expected))
+    }
+
+    @Test func encodeFunctionDefinitionExtraIgnoresReservedKeys() throws {
+        let query = ChatQuery(
+            messages: [],
+            model: .gpt4_o,
+            tools: [
+                .init(function: .init(
+                    name: "tool_with_collisions",
+                    description: "Reserved keys must not shadow typed fields.",
+                    parameters: nil,
+                    strict: nil,
+                    extra: [
+                        "name": .string("should-be-ignored"),
+                        "description": .string("also-ignored"),
+                        "strict": .bool(true),
+                        "x_custom": .string("kept"),
+                    ]
+                )),
+            ],
+            stream: false
+        )
+
+        let expected = """
+        {
+            "model": "gpt-4o",
+            "messages": [],
+            "stream": false,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "tool_with_collisions",
+                        "description": "Reserved keys must not shadow typed fields.",
+                        "x_custom": "kept"
+                    }
+                }
+            ]
+        }
+        """
+
+        #expect(try equal(query, expected))
+    }
+
+    @Test func decodeFunctionDefinitionExtraCollectsUnknownSiblings() throws {
+        let json = """
+        {
+            "model": "gpt-4o",
+            "messages": [],
+            "stream": false,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "vendor_tool",
+                        "x_vendor_flag": true,
+                        "vendor_priority": 7
+                    }
+                }
+            ]
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(ChatQuery.self, from: json.data(using: .utf8)!)
+        let fn = try #require(decoded.tools?.first?.function)
+
+        #expect(fn.name == "vendor_tool")
+        #expect(fn.extra?["x_vendor_flag"] == .bool(true))
+        #expect(fn.extra?["vendor_priority"] == .int(7))
+    }
+
+    @Test func functionDefinitionWithoutExtraEncodesUnchanged() throws {
+        let query = ChatQuery(
+            messages: [],
+            model: .gpt4_o,
+            tools: [
+                .init(function: .init(name: "plain_tool")),
+            ],
+            stream: false
+        )
+
+        let expected = """
+        {
+            "model": "gpt-4o",
+            "messages": [],
+            "stream": false,
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "plain_tool"
+                    }
+                }
+            ]
+        }
+        """
+
+        #expect(try equal(query, expected))
+    }
+
     @Test func decodeExtraBodyCollectsUnknownKeys() throws {
         let json = """
         {

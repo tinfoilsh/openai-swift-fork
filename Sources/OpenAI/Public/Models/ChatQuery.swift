@@ -1166,16 +1166,78 @@ public struct ChatQuery: Equatable, Codable, Streamable, Sendable {
             /// Defaults to false
             public let strict: Bool?
 
+            /// Vendor-specific fields to splice into the function object as
+            /// siblings of `name`/`description`/`parameters`/`strict`. Use
+            /// this to attach arbitrary metadata (e.g. routing hints,
+            /// experimental flags) that lives on the function definition
+            /// but is not part of the OpenAI tool-call spec. Reserved keys
+            /// (the typed properties above) are ignored on encode and not
+            /// collected on decode so they cannot shadow typed fields.
+            public let extra: [String: OpenAIJSON]?
+
             public init(
                 name: String,
                 description: String? = nil,
                 parameters: JSONSchema? = nil,
-                strict: Bool? = nil
+                strict: Bool? = nil,
+                extra: [String: OpenAIJSON]? = nil
             ) {
                 self.name = name
                 self.description = description
                 self.parameters = parameters
                 self.strict = strict
+                self.extra = extra
+            }
+
+            private enum CodingKeys: String, CodingKey {
+                case name
+                case description
+                case parameters
+                case strict
+            }
+
+            private struct DynamicCodingKey: CodingKey {
+                var stringValue: String
+                var intValue: Int? { nil }
+                init(stringValue: String) { self.stringValue = stringValue }
+                init?(intValue: Int) { return nil }
+            }
+
+            private static let reservedExtraKeys: Set<String> = [
+                CodingKeys.name.rawValue,
+                CodingKeys.description.rawValue,
+                CodingKeys.parameters.rawValue,
+                CodingKeys.strict.rawValue,
+            ]
+
+            public init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                name = try container.decode(String.self, forKey: .name)
+                description = try container.decodeIfPresent(String.self, forKey: .description)
+                parameters = try container.decodeIfPresent(JSONSchema.self, forKey: .parameters)
+                strict = try container.decodeIfPresent(Bool.self, forKey: .strict)
+
+                let dynamic = try decoder.container(keyedBy: DynamicCodingKey.self)
+                var extras: [String: OpenAIJSON] = [:]
+                for key in dynamic.allKeys where !FunctionDefinition.reservedExtraKeys.contains(key.stringValue) {
+                    extras[key.stringValue] = try dynamic.decode(OpenAIJSON.self, forKey: key)
+                }
+                extra = extras.isEmpty ? nil : extras
+            }
+
+            public func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(name, forKey: .name)
+                try container.encodeIfPresent(description, forKey: .description)
+                try container.encodeIfPresent(parameters, forKey: .parameters)
+                try container.encodeIfPresent(strict, forKey: .strict)
+
+                if let extra, !extra.isEmpty {
+                    var dynamic = encoder.container(keyedBy: DynamicCodingKey.self)
+                    for (key, value) in extra where !FunctionDefinition.reservedExtraKeys.contains(key) {
+                        try dynamic.encode(value, forKey: DynamicCodingKey(stringValue: key))
+                    }
+                }
             }
         }
 
