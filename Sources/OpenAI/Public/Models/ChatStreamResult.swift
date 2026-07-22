@@ -31,9 +31,6 @@ public struct ChatStreamResult: Codable, Equatable, Sendable {
             /// Web search tool: https://platform.openai.com/docs/guides/tools-web-search?api-mode=chat
             public let annotations: [Annotation]?
 
-            /// URL citation annotations from web search results
-            public let annotations: [Self.Annotation]?
-
             /// Value for `reasoning` field in response.
             ///
             /// Provided by:
@@ -124,38 +121,6 @@ public struct ChatStreamResult: Codable, Equatable, Sendable {
                 }
             }
 
-            /// An annotation containing citation information from web search
-            public struct Annotation: Codable, Equatable, Sendable {
-                /// The type of annotation (e.g., "url_citation")
-                public let type: String
-                /// URL citation details
-                public let urlCitation: URLCitation?
-
-                /// URL citation information from web search results
-                public struct URLCitation: Codable, Equatable, Sendable {
-                    /// The URL of the cited source
-                    public let url: String
-                    /// The title of the cited source
-                    public let title: String?
-                    /// Start index in the content where this citation applies
-                    public let startIndex: Int?
-                    /// End index in the content where this citation applies
-                    public let endIndex: Int?
-
-                    public enum CodingKeys: String, CodingKey {
-                        case url
-                        case title
-                        case startIndex = "start_index"
-                        case endIndex = "end_index"
-                    }
-                }
-
-                public enum CodingKeys: String, CodingKey {
-                    case type
-                    case urlCitation = "url_citation"
-                }
-            }
-
             public enum CodingKeys: String, CodingKey {
                 case content
                 case refusal
@@ -163,7 +128,6 @@ public struct ChatStreamResult: Codable, Equatable, Sendable {
                 case role
                 case annotations
                 case toolCalls = "tool_calls"
-                case annotations
                 case _reasoning = "reasoning"
                 case _reasoningContent = "reasoning_content"
             }
