@@ -33,6 +33,69 @@ final class StreamingSessionTests: XCTestCase {
         streamInterpreter.processData(.init())
         XCTAssertEqual(onReceivedContentCallCount, 1)
     }
+
+    func testErrorResponseBodyDecodedAfterStreamingCompletes() throws {
+        let recorder = StreamingSessionCallbackRecorder()
+        let session = StreamingSession(
+            urlSessionFactory: MockURLSessionFactory(),
+            urlRequest: .init(url: .init(string: "/")!),
+            interpreter: streamInterpreter,
+            sslDelegate: nil,
+            middlewares: [],
+            executionSerializer: NoDispatchExecutionSerializer(),
+            onReceiveContent: { _, _ in },
+            onProcessingError: { _, error in
+                recorder.processingError = error
+            },
+            onComplete: { _, error in
+                recorder.completionError = error
+                recorder.completionCallCount += 1
+            }
+        )
+        let urlSession = URLSessionMock()
+        let dataTask = DataTaskMock()
+        let response = try XCTUnwrap(HTTPURLResponse(
+            url: URL(string: "https://example.com/v1/chat/completions")!,
+            statusCode: 503,
+            httpVersion: nil,
+            headerFields: nil
+        ))
+
+        session.urlSession(
+            urlSession,
+            dataTask: dataTask,
+            didReceive: response
+        ) {
+            recorder.disposition = $0
+        }
+
+        XCTAssertEqual(recorder.disposition, .allow)
+        XCTAssertNil(recorder.processingError)
+
+        let errorData = Data(
+            """
+            {"error":{"message":"model not available","type":"invalid_request_error","param":null,"code":"model_not_available"}}
+            """.utf8
+        )
+        let splitIndex = errorData.count / 2
+        session.urlSession(
+            urlSession,
+            dataTask: dataTask,
+            didReceive: errorData.prefix(splitIndex)
+        )
+        session.urlSession(
+            urlSession,
+            dataTask: dataTask,
+            didReceive: errorData.dropFirst(splitIndex)
+        )
+        session.urlSession(urlSession, task: dataTask, didCompleteWithError: nil)
+
+        let errorResponse = try XCTUnwrap(recorder.processingError as? APIErrorResponse)
+        XCTAssertEqual(errorResponse.error.message, "model not available")
+        XCTAssertEqual(errorResponse.error.code, "model_not_available")
+        XCTAssertNil(recorder.completionError)
+        XCTAssertEqual(recorder.completionCallCount, 1)
+    }
 }
 
 class MockDataStreamInterpreter: StreamInterpreter, @unchecked Sendable {
@@ -49,4 +112,11 @@ class MockDataStreamInterpreter: StreamInterpreter, @unchecked Sendable {
     func processData(_ data: Data) {
         onEventDispatched?(data)
     }
+}
+
+private final class StreamingSessionCallbackRecorder: @unchecked Sendable {
+    var processingError: Error?
+    var completionError: Error?
+    var completionCallCount = 0
+    var disposition: URLSession.ResponseDisposition?
 }

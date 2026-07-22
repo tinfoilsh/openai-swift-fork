@@ -23,6 +23,8 @@ final class StreamingSession<Interpreter: StreamInterpreter>: NSObject, Identifi
     private let onReceiveContent: (@Sendable (StreamingSession, ResultType) -> Void)?
     private let onProcessingError: (@Sendable (StreamingSession, Error) -> Void)?
     private let onComplete: (@Sendable (StreamingSession, Error?) -> Void)?
+    private var errorResponse: HTTPURLResponse?
+    private var errorResponseData = Data()
 
     init(
         urlSessionFactory: URLSessionFactory = FoundationURLSessionFactory(),
@@ -55,7 +57,20 @@ final class StreamingSession<Interpreter: StreamInterpreter>: NSObject, Identifi
     
     func urlSession(_ session: any URLSessionProtocol, task: any URLSessionTaskProtocol, didCompleteWithError error: (any Error)?) {
         executionSerializer.dispatch {
-            self.onComplete?(self,error)
+            if error == nil, let errorResponse = self.errorResponse {
+                let responseError: any Error
+                if let decodedError = JSONResponseErrorDecoder(decoder: JSONDecoder())
+                    .decodeErrorResponse(data: self.errorResponseData) {
+                    responseError = decodedError
+                } else {
+                    responseError = OpenAIError.statusError(
+                        response: errorResponse,
+                        statusCode: errorResponse.statusCode
+                    )
+                }
+                self.onProcessingError?(self, responseError)
+            }
+            self.onComplete?(self, error)
         }
     }
     
@@ -64,8 +79,12 @@ final class StreamingSession<Interpreter: StreamInterpreter>: NSObject, Identifi
             let data = self.middlewares.reduce(data) { current, middleware in
                 middleware.interceptStreamingData(request: dataTask.originalRequest, current)
             }
-            
-            self.interpreter.processData(data)
+
+            if self.errorResponse != nil {
+                self.errorResponseData.append(data)
+            } else {
+                self.interpreter.processData(data)
+            }
         }
     }
 
@@ -77,10 +96,7 @@ final class StreamingSession<Interpreter: StreamInterpreter>: NSObject, Identifi
     ) {
         executionSerializer.dispatch {
             if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
-                let error = OpenAIError.statusError(response: httpResponse, statusCode: httpResponse.statusCode)
-                self.onProcessingError?(self, error)
-                completionHandler(.cancel)
-                return
+                self.errorResponse = httpResponse
             }
             completionHandler(.allow)
         }
