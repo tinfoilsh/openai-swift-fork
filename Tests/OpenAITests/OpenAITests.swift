@@ -473,6 +473,22 @@ class OpenAITests: XCTestCase {
         XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "OpenAI-Organization"), "org")
     }
     
+    func testPerRequestHeadersAddAndOverrideConfiguredHeaders() throws {
+        let configuration = OpenAI.Configuration(token: "foo", timeoutInterval: 14, customHeaders: ["X-Configured": "config", "X-Both": "config"])
+        let completionQuery = ChatQuery(messages: [.user(.init(content: .string("how are you?")))], model: .gpt3_5Turbo_16k)
+        let jsonRequest = JSONRequest<ChatResult>(
+            body: completionQuery,
+            url: URL(string: "http://google.com")!,
+            customHeaders: ["X-Per-Request": "once", "X-Both": "request"]
+        )
+        let urlRequest = try jsonRequest.build(configuration: configuration)
+        
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "X-Configured"), "config")
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "X-Per-Request"), "once")
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "X-Both"), "request")
+        XCTAssertEqual(urlRequest.value(forHTTPHeaderField: "Authorization"), "Bearer foo")
+    }
+    
     func testDefaultHostURLBuilt() {
         let configuration = OpenAI.Configuration(token: "foo", organizationIdentifier: "bar", timeoutInterval: 14)
         let openAI = OpenAI(configuration: configuration, session: self.urlSession, streamingSessionFactory: MockStreamingSessionFactory())
