@@ -18,6 +18,7 @@ struct ResponseObjectCodingTests {
         "created_at": 1717459200,
         "output": [],
         "tools": [],
+        "tool_choice": "auto",
         "metadata": {},
         "parallel_tool_calls": false
     }
@@ -51,6 +52,7 @@ struct ResponseObjectCodingTests {
             "created_at": 1717459200,
             "output": [],
             "tools": [],
+            "tool_choice": "auto",
             "metadata": {},
             "parallel_tool_calls": false,
             "incomplete_details": null
@@ -69,6 +71,7 @@ struct ResponseObjectCodingTests {
             "created_at": 1717459200,
             "output": [],
             "tools": [],
+            "tool_choice": "auto",
             "metadata": {},
             "parallel_tool_calls": false,
             "incomplete_details": { "reason": "max_output_tokens" }
@@ -100,6 +103,7 @@ struct ResponseObjectCodingTests {
             "output": [],
             "tools": [],
             "metadata": {},
+            "tool_choice": "auto",
             "parallel_tool_calls": false,
             "error": { "code": "\(raw)", "message": "The server had an error while processing your request." }
         }
@@ -124,6 +128,7 @@ struct ResponseObjectCodingTests {
                 "output": [],
                 "tools": [],
                 "metadata": {},
+                "tool_choice": "auto",
                 "parallel_tool_calls": false,
                 "error": { "code": "upstream_error", "message": "boom" }
             }
