@@ -71,3 +71,8 @@ generate:
 	python3 -B "$(PROJECT_DIR)/Scripts/extract_components.py" \
 		"$(TYPES_SWIFT)" \
 		"$(COMPONENTS_SWIFT)"
+	# ResponseErrorCode must decode codes the spec does not enumerate. See the
+	# script's docstring for the symptom and removal condition.
+	python3 -B "$(PROJECT_DIR)/Scripts/open_response_error_code.py" \
+		"$(COMPONENTS_SWIFT)" \
+		"$(COMPONENTS_SWIFT)"

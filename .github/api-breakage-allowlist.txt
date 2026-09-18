@@ -1,0 +1,7 @@
+API breakage: constructor Components.Schemas.ResponseErrorCode.init(rawValue:) has return type change from OpenAI.Components.Schemas.ResponseErrorCode? to OpenAI.Components.Schemas.ResponseErrorCode
+API breakage: enum Components.Schemas.ResponseErrorCode has removed conformance to BitwiseCopyable
+API breakage: enum Components.Schemas.ResponseErrorCode has removed conformance to CaseIterable
+API breakage: enum Components.Schemas.ResponseErrorCode is now without @frozen
+API breakage: enumelement Components.Schemas.ResponseErrorCode.other has been added as a new enum case
+API breakage: typealias Components.Schemas.ResponseErrorCode.AllCases has been removed
+API breakage: var Components.Schemas.ResponseErrorCode.allCases has been removed
