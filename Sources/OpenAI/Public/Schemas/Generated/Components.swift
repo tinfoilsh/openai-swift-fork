@@ -6610,25 +6610,83 @@ public enum Components {
         ///
         ///
         /// - Remark: Generated from `#/components/schemas/ResponseErrorCode`.
-        @frozen public enum ResponseErrorCode: String, Codable, Hashable, Sendable, CaseIterable {
-            case serverError = "server_error"
-            case rateLimitExceeded = "rate_limit_exceeded"
-            case invalidPrompt = "invalid_prompt"
-            case vectorStoreTimeout = "vector_store_timeout"
-            case invalidImage = "invalid_image"
-            case invalidImageFormat = "invalid_image_format"
-            case invalidBase64Image = "invalid_base64_image"
-            case invalidImageUrl = "invalid_image_url"
-            case imageTooLarge = "image_too_large"
-            case imageTooSmall = "image_too_small"
-            case imageParseError = "image_parse_error"
-            case imageContentPolicyViolation = "image_content_policy_violation"
-            case invalidImageMode = "invalid_image_mode"
-            case imageFileTooLarge = "image_file_too_large"
-            case unsupportedImageMediaType = "unsupported_image_media_type"
-            case emptyImageFile = "empty_image_file"
-            case failedToDownloadImage = "failed_to_download_image"
-            case imageFileNotFound = "image_file_not_found"
+        public enum ResponseErrorCode: RawRepresentable, Codable, Hashable, Sendable {
+            case serverError
+            case rateLimitExceeded
+            case invalidPrompt
+            case vectorStoreTimeout
+            case invalidImage
+            case invalidImageFormat
+            case invalidBase64Image
+            case invalidImageUrl
+            case imageTooLarge
+            case imageTooSmall
+            case imageParseError
+            case imageContentPolicyViolation
+            case invalidImageMode
+            case imageFileTooLarge
+            case unsupportedImageMediaType
+            case emptyImageFile
+            case failedToDownloadImage
+            case imageFileNotFound
+            /// A code outside the values enumerated by the spec. Servers add codes
+            /// without a spec bump, so unknown values are preserved rather than
+            /// failing to decode.
+            case other(Swift.String)
+            public typealias RawValue = Swift.String
+            public init(rawValue: Swift.String) {
+                switch rawValue {
+                case "server_error": self = .serverError
+                case "rate_limit_exceeded": self = .rateLimitExceeded
+                case "invalid_prompt": self = .invalidPrompt
+                case "vector_store_timeout": self = .vectorStoreTimeout
+                case "invalid_image": self = .invalidImage
+                case "invalid_image_format": self = .invalidImageFormat
+                case "invalid_base64_image": self = .invalidBase64Image
+                case "invalid_image_url": self = .invalidImageUrl
+                case "image_too_large": self = .imageTooLarge
+                case "image_too_small": self = .imageTooSmall
+                case "image_parse_error": self = .imageParseError
+                case "image_content_policy_violation": self = .imageContentPolicyViolation
+                case "invalid_image_mode": self = .invalidImageMode
+                case "image_file_too_large": self = .imageFileTooLarge
+                case "unsupported_image_media_type": self = .unsupportedImageMediaType
+                case "empty_image_file": self = .emptyImageFile
+                case "failed_to_download_image": self = .failedToDownloadImage
+                case "image_file_not_found": self = .imageFileNotFound
+                default: self = .other(rawValue)
+                }
+            }
+            public var rawValue: Swift.String {
+                switch self {
+                case .serverError: return "server_error"
+                case .rateLimitExceeded: return "rate_limit_exceeded"
+                case .invalidPrompt: return "invalid_prompt"
+                case .vectorStoreTimeout: return "vector_store_timeout"
+                case .invalidImage: return "invalid_image"
+                case .invalidImageFormat: return "invalid_image_format"
+                case .invalidBase64Image: return "invalid_base64_image"
+                case .invalidImageUrl: return "invalid_image_url"
+                case .imageTooLarge: return "image_too_large"
+                case .imageTooSmall: return "image_too_small"
+                case .imageParseError: return "image_parse_error"
+                case .imageContentPolicyViolation: return "image_content_policy_violation"
+                case .invalidImageMode: return "invalid_image_mode"
+                case .imageFileTooLarge: return "image_file_too_large"
+                case .unsupportedImageMediaType: return "unsupported_image_media_type"
+                case .emptyImageFile: return "empty_image_file"
+                case .failedToDownloadImage: return "failed_to_download_image"
+                case .imageFileNotFound: return "image_file_not_found"
+                case .other(let value): return value
+                }
+            }
+            public init(from decoder: any Decoder) throws {
+                self.init(rawValue: try decoder.singleValueContainer().decode(Swift.String.self))
+            }
+            public func encode(to encoder: any Encoder) throws {
+                var container = encoder.singleValueContainer()
+                try container.encode(rawValue)
+            }
         }
         /// Emitted when an error occurs.
         ///
