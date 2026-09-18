@@ -17,7 +17,10 @@ extension URLSession {
     ///
     /// - Parameter delegate: Ignored. Per-task delegates are not supported by this Foundation version,
     ///   and the library only ever passes `nil` here.
-    func data(for request: URLRequest, delegate: (any URLSessionTaskDelegate)?) async throws -> (Data, URLResponse) {
+    ///
+    /// Public because `URLSessionProtocol` is public in this fork (custom HTTP client injection), and a
+    /// public protocol requirement cannot be satisfied by an internal method.
+    public func data(for request: URLRequest, delegate: (any URLSessionTaskDelegate)?) async throws -> (Data, URLResponse) {
         let taskHolder = CancellableDataTaskHolder()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(Data, URLResponse), Error>) in
