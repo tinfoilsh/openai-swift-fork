@@ -7,6 +7,9 @@
 
 import XCTest
 @testable import OpenAI
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 final class StreamingSessionTests: XCTestCase {
     private let streamInterpreter = MockDataStreamInterpreter()

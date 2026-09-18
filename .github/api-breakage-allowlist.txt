@@ -84,6 +84,8 @@ API breakage: accessor ResponseObject.instructions.Get() has return type change 
 API breakage: accessor ResponseObject.metadata.Get() has return type change from [Swift.String : Swift.String] to [Swift.String : Swift.String]?
 API breakage: accessor ResponseObject.serviceTier.Get() has return type change from OpenAI.ResponseObject.Schemas.ServiceTier? to OpenAI.ResponseObject.Schemas.ServiceTierResponses?
 API breakage: accessor ResponseObject.toolChoice.Get() has return type change from OpenAI.ResponseObject.Schemas.ToolChoiceParam? to OpenAI.ResponseObject.Schemas.ToolChoiceParam
+API breakage: constructor ChatQuery.ChatCompletionToolParam.FunctionDefinition.init(name:description:parameters:strict:) has been removed
+API breakage: constructor ChatQuery.init(messages:model:modalities:audioOptions:reasoningEffort:frequencyPenalty:logitBias:logprobs:maxCompletionTokens:metadata:n:parallelToolCalls:prediction:presencePenalty:responseFormat:seed:serviceTier:stop:store:temperature:toolChoice:tools:topLogprobs:topP:user:webSearchOptions:stream:streamOptions:) has been removed
 API breakage: constructor Components.Schemas._Error.init(code:message:param:_type:) has been removed
 API breakage: constructor Components.Schemas.ApplyPatchToolCall.init(_type:id:callId:status:operation:createdBy:) has been removed
 API breakage: constructor Components.Schemas.ApplyPatchToolCallItemParam.init(_type:id:callId:status:operation:) has been removed
@@ -132,6 +134,7 @@ API breakage: constructor Components.Schemas.ServiceTier.init(rawValue:) has ret
 API breakage: constructor Components.Schemas.TranscriptTextDoneEvent.init(_type:text:logprobs:usage:) has been removed
 API breakage: constructor Components.Schemas.WebSearchTool.init(_type:filters:userLocation:searchContextSize:) has been removed
 API breakage: constructor Components.Schemas.WebSearchToolCall.init(id:_type:status:action:) has parameter 2 type change from OpenAI.Components.Schemas.WebSearchToolCall.StatusPayload to OpenAI.Components.Schemas.WebSearchCallStatus
+API breakage: constructor OpenAI.Configuration.init(token:organizationIdentifier:host:port:scheme:basePath:timeoutInterval:customHeaders:parsingOptions:) has been removed
 API breakage: enum Components.Schemas.ResponseErrorCode has removed conformance to BitwiseCopyable
 API breakage: enum Components.Schemas.ResponseErrorCode has removed conformance to CaseIterable
 API breakage: enum Components.Schemas.ResponseErrorCode is now without @frozen

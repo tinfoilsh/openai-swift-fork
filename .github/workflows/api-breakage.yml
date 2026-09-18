@@ -37,7 +37,7 @@ jobs:
           if [ -n "$REQUESTED" ]; then
             baseline="$REQUESTED"
           else
-            baseline="$(git tag --list --sort=-version:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
+            baseline="$(git tag --list --sort=-version:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)"
           fi
           if [ -z "$baseline" ]; then
             echo "::error::Could not determine a baseline release tag"
