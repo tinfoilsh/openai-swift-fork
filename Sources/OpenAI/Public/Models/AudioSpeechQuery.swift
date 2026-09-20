@@ -16,7 +16,7 @@ public struct AudioSpeechQuery: Codable, Sendable {
     /// To get aquinted with each of the voices and listen to the samples visit:
     /// [OpenAI Text-to-Speech – Voice Options](https://platform.openai.com/docs/guides/text-to-speech/voice-options)
     /// Hear and play with these voices in https://openai.fm/
-    public enum AudioSpeechVoice: String, Codable, CaseIterable, Sendable {
+    public enum AudioSpeechVoice: RawRepresentable, Codable, CaseIterable, Sendable, Hashable {
         case alloy
         case ash
         case ballad
@@ -28,6 +28,47 @@ public struct AudioSpeechQuery: Codable, Sendable {
         case sage
         case shimmer
         case verse
+        case custom(String)
+
+        public static let allCases: [Self] = [
+            .alloy, .ash, .ballad, .coral, .echo, .fable, .onyx, .nova, .sage, .shimmer, .verse
+        ]
+
+        public var rawValue: String {
+            switch self {
+            case .alloy: return "alloy"
+            case .ash: return "ash"
+            case .ballad: return "ballad"
+            case .coral: return "coral"
+            case .echo: return "echo"
+            case .fable: return "fable"
+            case .onyx: return "onyx"
+            case .nova: return "nova"
+            case .sage: return "sage"
+            case .shimmer: return "shimmer"
+            case .verse: return "verse"
+            case .custom(let name): return name
+            }
+        }
+
+        public init?(rawValue: String) {
+            self = Self.allCases.first { $0.rawValue == rawValue } ?? .custom(rawValue)
+        }
+
+        public init(from decoder: Decoder) throws {
+            let value = try decoder.singleValueContainer().decode(String.self)
+            self = Self.allCases.first { $0.rawValue == value } ?? .custom(value)
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            try container.encode(rawValue)
+        }
+    }
+
+    /// Binary speech transport. SSE speech events require a separate event decoder.
+    public enum AudioSpeechStreamFormat: String, Codable, Sendable {
+        case audio
     }
     
     /// Encapsulates the response formats available for audio data.
@@ -63,6 +104,9 @@ public struct AudioSpeechQuery: Codable, Sendable {
     ///  Control the voice of your generated audio with additional instructions. Does not work with tts-1 or tts-1-hd.
     public let instructions: String?
 
+    /// Omitted by default so the provider chooses its default transport.
+    public let streamFormat: AudioSpeechStreamFormat?
+
     public enum CodingKeys: String, CodingKey {
         case model
         case input
@@ -70,27 +114,22 @@ public struct AudioSpeechQuery: Codable, Sendable {
         case responseFormat = "response_format"
         case speed
         case instructions
+        case streamFormat = "stream_format"
     }
 
     public init(model: Model, input: String, voice: AudioSpeechVoice, instructions: String = "", responseFormat: AudioSpeechResponseFormat = .mp3, speed: Double = 1.0) {
-        self.model = AudioSpeechQuery.validateSpeechModel(model)
+        self.init(model: model, input: input, voice: voice, instructions: instructions, responseFormat: responseFormat, speed: speed, streamFormat: nil)
+    }
+
+    /// Model and voice identifiers are forwarded to the provider without a model allowlist.
+    public init(model: Model, input: String, voice: AudioSpeechVoice, instructions: String = "", responseFormat: AudioSpeechResponseFormat = .mp3, speed: Double = 1.0, streamFormat: AudioSpeechStreamFormat?) {
+        self.model = model
         self.speed = AudioSpeechQuery.normalizeSpeechSpeed(speed)
         self.input = input
         self.voice = voice
         self.responseFormat = responseFormat
         self.instructions = instructions
-    }
-}
-
-private extension AudioSpeechQuery {
-    
-    static func validateSpeechModel(_ inputModel: Model) -> Model {
-        let isModelOfIncorrentFormat = inputModel != .tts_1 && inputModel != .tts_1_hd && inputModel != .gpt_4o_mini_tts
-        guard !isModelOfIncorrentFormat else {
-            print("[AudioSpeech] 'AudioSpeechQuery' must have a valid Text-To-Speech model, 'tts-1' or 'tts-1-hd', or 'gpt-4o-mini-tts'. Setting model to 'tts-1'.")
-            return .tts_1
-        }
-        return inputModel
+        self.streamFormat = streamFormat
     }
 }
 

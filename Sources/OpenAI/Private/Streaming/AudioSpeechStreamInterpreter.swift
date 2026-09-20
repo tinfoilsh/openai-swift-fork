@@ -11,29 +11,15 @@ final class AudioSpeechStreamInterpreter: @unchecked Sendable, StreamInterpreter
     typealias ResultType = AudioSpeechResult
     
     private var onEventDispatched: ((AudioSpeechResult) -> Void)?
-    private var onError: ((Error) -> Void)?
-    private let executionSerializer: ExecutionSerializer
-    
-    init(executionSerializer: ExecutionSerializer = GCDQueueAsyncExecutionSerializer(queue: .userInitiated)) {
-        self.executionSerializer = executionSerializer
-    }
     
     func setCallbackClosures(onEventDispatched: @escaping (AudioSpeechResult) -> Void, onError: @escaping (any Error) -> Void) {
-        executionSerializer.dispatch {
-            self.onEventDispatched = onEventDispatched
-            self.onError = onError
-        }
+        self.onEventDispatched = onEventDispatched
     }
     
     func processData(_ data: Data) {
-        executionSerializer.dispatch {
-            let decoder = JSONDecoder()
-            if let decoded = JSONResponseErrorDecoder(decoder: decoder).decodeErrorResponse(data: data) {
-                self.onError?(decoded)
-            }
-            
-            let result = AudioSpeechResult(audio: data)
-            self.onEventDispatched?(result)
-        }
+        // The session validates the response and serializes delivery, including completion.
+        // Audio bytes must not be interpreted as JSON, even if a chunk happens to parse.
+        guard !data.isEmpty else { return }
+        onEventDispatched?(AudioSpeechResult(audio: data))
     }
 }
