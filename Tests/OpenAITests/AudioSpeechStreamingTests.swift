@@ -200,6 +200,35 @@ final class AudioSpeechStreamingTests: XCTestCase {
         XCTAssertEqual(received, chunks)
     }
 
+    func testSuccessfulAsyncCompletionOnlyPerformsNormalSessionCleanup() async throws {
+        for completesSynchronously in [false, true] {
+            let harness = SpeechHarness()
+            let audio = Data([0x01, 0x02])
+            func deliverResponse() throws {
+                try harness.respond(contentType: "audio/pcm")
+                harness.send(audio)
+                harness.complete()
+            }
+            if completesSynchronously {
+                harness.transport.dataTask.completion = { _, _, _ in
+                    do {
+                        try deliverResponse()
+                    } catch {
+                        XCTFail("Failed to deliver the test response: \(error)")
+                    }
+                }
+            }
+            let stream: AsyncThrowingStream<AudioSpeechResult, Error> = harness.client.audioCreateSpeechStream(query: .mock)
+            harness.transport.dataTask.completion = nil
+            if !completesSynchronously { try deliverResponse() }
+
+            var received: [Data] = []
+            for try await result in stream { received.append(result.audio) }
+            XCTAssertEqual(received, [audio])
+            XCTAssertEqual(harness.transport.invalidateAndCancelCallCount, 1)
+        }
+    }
+
     func testAsyncFailureCancelsEvenWhenTransportFailsBeforeReturningRequest() async throws {
         let harness = SpeechHarness()
         harness.transport.dataTask.completion = { _, _, _ in
