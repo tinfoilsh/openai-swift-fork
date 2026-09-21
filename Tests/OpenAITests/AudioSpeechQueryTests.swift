@@ -3,12 +3,14 @@ import XCTest
 
 final class AudioSpeechQueryTests: XCTestCase {
     func testProviderRequestEncodingAndRoundTrip() throws {
+        let requestedSpeed = 1.25
         let query = AudioSpeechQuery(
             model: "qwen3-tts",
             input: "Read this aloud.",
             voice: .custom("aiden"),
             instructions: "Speak clearly.",
             responseFormat: .pcm,
+            speed: requestedSpeed,
             streamFormat: .audio
         )
         let data = try JSONEncoder().encode(query)
@@ -19,12 +21,15 @@ final class AudioSpeechQueryTests: XCTestCase {
         XCTAssertEqual(json["instructions"] as? String, query.instructions)
         XCTAssertEqual(json["response_format"] as? String, "pcm")
         XCTAssertEqual(json["stream_format"] as? String, "audio")
-        XCTAssertEqual(json["speed"] as? Double, 1)
+        XCTAssertEqual(json["speed"] as? Double, requestedSpeed)
         XCTAssertEqual(json.count, 7)
 
         let decoded = try JSONDecoder().decode(AudioSpeechQuery.self, from: data)
         XCTAssertEqual(decoded.model, query.model)
+        XCTAssertEqual(decoded.input, query.input)
         XCTAssertEqual(decoded.voice, query.voice)
+        XCTAssertEqual(decoded.instructions, query.instructions)
+        XCTAssertEqual(decoded.speed, query.speed)
         XCTAssertEqual(decoded.streamFormat, .audio)
         XCTAssertEqual(decoded.responseFormat, .pcm)
     }

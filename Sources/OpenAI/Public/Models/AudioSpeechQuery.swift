@@ -90,12 +90,12 @@ public struct AudioSpeechQuery: Codable, Sendable {
     }
     /// The text to generate audio for. The maximum length is 4096 characters.
     public let input: String
-    /// One of the available TTS models: tts-1 or tts-1-hd
+    /// Speech model identifier, forwarded unchanged to the configured provider.
     public let model: Model
-    /// The voice to use when generating the audio. Supported voices are alloy, echo, fable, onyx, nova, and shimmer. Previews of the voices are available in the Text to speech guide.
+    /// A built-in voice or a provider-specific voice selected with `.custom(_:)`.
     /// https://platform.openai.com/docs/guides/text-to-speech/voice-options
     public let voice: AudioSpeechVoice
-    /// The format to audio in. Supported formats are mp3, opus, aac, flac, and pcm.
+    /// The audio response format: mp3, opus, aac, flac, wav, or pcm, subject to provider support.
     /// Defaults to mp3
     public let responseFormat: AudioSpeechResponseFormat?
     /// The speed of the generated audio. Select a value from **0.25** to **4.0**. **1.0** is the default.
