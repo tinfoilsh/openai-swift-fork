@@ -620,7 +620,7 @@ let result = try await openAI.audioCreateSpeech(query: query)
 
 ### Audio Create Speech Streaming
 
-Audio Create Speech is available by using `audioCreateSpeechStream` function. Tokens will be sent one-by-one.
+Audio Create Speech is available by using `audioCreateSpeechStream`. Binary audio chunks are delivered in order as they arrive, before the response completes. Chunk boundaries are not necessarily PCM sample or audio-frame boundaries.
 
 **Closures**
 ```swift
@@ -654,6 +654,28 @@ for try await result in openAI.audioCreateSpeechStream(query: query) {
    //Handle result here
 }
 ```
+
+**OpenAI-compatible speech providers**
+
+Model identifiers are forwarded unchanged, and `.custom("aiden")` selects a provider-specific voice. The existing built-in voices, `rawValue` API, `allCases` list, and initializer remain available. `streamFormat: .audio` explicitly requests binary audio; omitting it preserves the provider's default. SSE speech events are not supported by the binary speech API.
+
+```swift
+let query = AudioSpeechQuery(
+    model: "qwen3-tts",
+    input: "Hello, world!",
+    voice: .custom("aiden"),
+    responseFormat: .pcm,
+    streamFormat: .audio
+)
+let stream = openAI.audioCreateSpeechStream(
+    query: query,
+    options: .init(expectedContentType: "audio/pcm")
+)
+```
+
+The `options:` overloads are available on the concrete `OpenAI` client's callback and async APIs. `expectedContentType` requires that MIME type before delivering audio, ignoring case and MIME parameters. Without an expected type, an audio MIME type or `application/octet-stream` is required. Missing content types, JSON, HTML, SSE, non-success statuses, and empty audio responses fail instead of being delivered as audio. HTTP error bodies are decoded up to a bounded size.
+
+Cancel the consuming task (or the callback API's returned `CancellableRequest`) to stop generation. Failure and cancellation terminate the request and suppress subsequent chunks without retrying generation. Playback scheduling, PCM decoding, and buffering limits belong to the caller; the async stream itself uses unbounded buffering, so consume it promptly and cancel when playback stops.
 
 ### Audio Transcriptions
 

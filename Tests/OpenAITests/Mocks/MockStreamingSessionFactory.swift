@@ -37,6 +37,7 @@ class MockStreamingSessionFactory: StreamingSessionFactory, @unchecked Sendable 
     
     func makeAudioSpeechStreamingSession(
         urlRequest: URLRequest,
+        options: AudioSpeechStreamOptions,
         onReceiveContent: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, AudioSpeechResult) -> Void,
         onProcessingError: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, any Error) -> Void,
         onComplete: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, (any Error)?) -> Void
@@ -48,6 +49,7 @@ class MockStreamingSessionFactory: StreamingSessionFactory, @unchecked Sendable 
             sslDelegate: nil,
             middlewares: [],
             executionSerializer: executionSerializer,
+            speechResponseValidator: .init(options: options),
             onReceiveContent: onReceiveContent,
             onProcessingError: onProcessingError,
             onComplete: onComplete
@@ -73,5 +75,4 @@ class MockStreamingSessionFactory: StreamingSessionFactory, @unchecked Sendable 
         )
     }
 }
-
 

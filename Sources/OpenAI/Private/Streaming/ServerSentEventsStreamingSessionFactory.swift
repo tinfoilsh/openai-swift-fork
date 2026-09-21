@@ -21,6 +21,7 @@ protocol StreamingSessionFactory: Sendable {
     
     func makeAudioSpeechStreamingSession(
         urlRequest: URLRequest,
+        options: AudioSpeechStreamOptions,
         onReceiveContent: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, AudioSpeechResult) -> Void,
         onProcessingError: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, Error) -> Void,
         onComplete: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, Error?) -> Void
@@ -72,6 +73,7 @@ struct ImplicitURLSessionStreamingSessionFactory: StreamingSessionFactory {
 
     func makeAudioSpeechStreamingSession(
         urlRequest: URLRequest,
+        options: AudioSpeechStreamOptions,
         onReceiveContent: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, AudioSpeechResult) -> Void,
         onProcessingError: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, any Error) -> Void,
         onComplete: @Sendable @escaping (StreamingSession<AudioSpeechStreamInterpreter>, (any Error)?) -> Void
@@ -82,6 +84,7 @@ struct ImplicitURLSessionStreamingSessionFactory: StreamingSessionFactory {
             interpreter: .init(),
             sslDelegate: sslDelegate,
             middlewares: middlewares,
+            speechResponseValidator: .init(options: options),
             onReceiveContent: onReceiveContent,
             onProcessingError: onProcessingError,
             onComplete: onComplete

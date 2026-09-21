@@ -79,8 +79,26 @@ extension OpenAI: OpenAIAsync {
     public func audioCreateSpeechStream(
         query: AudioSpeechQuery
     ) -> AsyncThrowingStream<AudioSpeechResult, Error> {
-        makeAsyncStream { onResult, completion in
-            audioCreateSpeechStream(query: query, onResult: onResult, completion: completion)
+        audioCreateSpeechStream(query: query, options: .init())
+    }
+
+    /// Cancels the underlying request when iteration is canceled or the stream fails.
+    public func audioCreateSpeechStream(
+        query: AudioSpeechQuery,
+        options: AudioSpeechStreamOptions
+    ) -> AsyncThrowingStream<AudioSpeechResult, Error> {
+        AsyncThrowingStream { continuation in
+            let cancellation = AudioSpeechStreamCancellation()
+            continuation.onTermination = { termination in
+                if case .finished(nil) = termination { return }
+                cancellation.cancel()
+            }
+            let request = audioCreateSpeechStream(query: query, options: options) { result in
+                continuation.yield(with: result)
+            } completion: { error in
+                continuation.finish(throwing: error)
+            }
+            cancellation.setRequest(request)
         }
     }
     

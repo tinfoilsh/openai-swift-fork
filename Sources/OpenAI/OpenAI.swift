@@ -420,8 +420,14 @@ final public class OpenAI: OpenAIProtocol, @unchecked Sendable {
     }
     
     public func audioCreateSpeechStream(query: AudioSpeechQuery, onResult: @escaping @Sendable (Result<AudioSpeechResult, Error>) -> Void, completion: (@Sendable (Error?) -> Void)?) -> CancellableRequest {
+        audioCreateSpeechStream(query: query, options: .init(), onResult: onResult, completion: completion)
+    }
+
+    /// Streams binary audio, validating its content type before delivering bytes.
+    public func audioCreateSpeechStream(query: AudioSpeechQuery, options: AudioSpeechStreamOptions, onResult: @escaping @Sendable (Result<AudioSpeechResult, Error>) -> Void, completion: (@Sendable (Error?) -> Void)?) -> CancellableRequest {
         performSpeechStreamingRequest(
             request: JSONRequest<AudioSpeechResult>(body: query, url: buildURL(path: .audioSpeech)),
+            options: options,
             onResult: onResult,
             completion: completion
         )
@@ -450,10 +456,11 @@ extension OpenAI {
     
     func performSpeechStreamingRequest(
         request: any URLRequestBuildable,
+        options: AudioSpeechStreamOptions = .init(),
         onResult: @escaping @Sendable (Result<AudioSpeechResult, Error>) -> Void,
         completion: (@Sendable (Error?) -> Void)?
     ) -> CancellableRequest {
-        streamingClient.performSpeechStreamingRequest(request: request, onResult: onResult, completion: completion)
+        streamingClient.performSpeechStreamingRequest(request: request, options: options, onResult: onResult, completion: completion)
     }
 }
 

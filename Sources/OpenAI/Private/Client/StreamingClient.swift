@@ -60,6 +60,7 @@ final class StreamingClient: @unchecked Sendable {
     
     func performSpeechStreamingRequest(
         request: any URLRequestBuildable,
+        options: AudioSpeechStreamOptions = .init(),
         onResult: @escaping @Sendable (Result<AudioSpeechResult, Error>) -> Void,
         completion: (@Sendable (Error?) -> Void)?
     ) -> CancellableRequest {
@@ -70,7 +71,8 @@ final class StreamingClient: @unchecked Sendable {
             }
 
             let session = streamingSessionFactory.makeAudioSpeechStreamingSession(
-                urlRequest: interceptedRequest
+                urlRequest: interceptedRequest,
+                options: options
             ) { _, object in
                 onResult(.success(object))
             } onProcessingError: { _, error in
@@ -80,7 +82,11 @@ final class StreamingClient: @unchecked Sendable {
                 self?.invalidateSession(session)
             }
             
-            return runSession(session)
+            let request = runSession(session)
+            return AudioSpeechCancellableRequest {
+                session.cancelSpeech()
+                request.cancelRequest()
+            }
         } catch {
             completion?(error)
             return NoOpCancellableRequest()

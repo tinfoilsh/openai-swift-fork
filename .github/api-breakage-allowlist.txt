@@ -1,3 +1,5 @@
+API breakage: enumelement AudioSpeechQuery.AudioSpeechVoice.custom has been added as a new enum case
+API breakage: enumelement AudioSpeechQuery.CodingKeys.streamFormat has been added as a new enum case
 API breakage: accessor Components.Schemas.FunctionCallOutputItemParam.callId.Get() has return type change from Swift.String to Swift.String?
 API breakage: accessor Components.Schemas.FunctionCallOutputItemParam.callId.Set() has parameter 0 type change from Swift.String to Swift.String?
 API breakage: accessor Components.Schemas.FunctionToolCallOutput.callId.Get() has return type change from Swift.String to Swift.String?
