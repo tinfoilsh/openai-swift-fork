@@ -199,6 +199,19 @@ class OpenAITests: XCTestCase {
         }
     }
 
+    func testChatsReportsTheStatusWhenAnUnsuccessfulBodyDescribesNoError() async throws {
+        let status = 500
+        for body in ["[]", "{}", "not json"] {
+            self.urlSession.dataTask = .response(with: Data(body.utf8), statusCode: status)
+
+            let error: OpenAIError = try await XCTExpectError { try await openAI.chats(query: makeChatQuery()) }
+            guard case .statusError(_, let statusCode) = error else {
+                return XCTFail("Expected a status error for body \(body), got \(error)")
+            }
+            XCTAssertEqual(statusCode, status)
+        }
+    }
+
     func testChatsReportsTheAPIErrorOfAnUnsuccessfulStatus() async throws {
         let inError = APIError(message: "foo", type: "bar", param: "baz", code: "100")
         let body = Data(#"{"error":{"message":"foo","type":"bar","param":"baz","code":"100"}}"#.utf8)
