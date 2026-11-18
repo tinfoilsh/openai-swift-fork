@@ -21,23 +21,43 @@ struct URLResponseHandler {
     
     func interceptAndDecode<ResultType: Codable>(response: URLResponse, urlRequest: URLRequest, responseData data: Data) throws -> ResultType {
         let interceptedData = intercept(response: response, data: data, request: urlRequest)
-        return try decodeJson(data: interceptedData ?? data)
+        let finalData = interceptedData ?? data
+        try requireSuccess(response: response, data: finalData)
+        return try decodeJson(data: finalData)
     }
     
     func interceptAndDecode<ResultType: Codable>(response: URLResponse?, urlRequest: URLRequest, error: Error?, responseData data: Data?) throws -> ResultType {
         let interceptedData = intercept(response: response, data: data, request: urlRequest)
         let unwrappedData = try self.unwrap(error: error, originalData: data, interceptedData: interceptedData)
+        try requireSuccess(response: response, data: unwrappedData)
         return try decodeJson(data: unwrappedData)
     }
     
     func interceptAndDecodeRaw(response: URLResponse, urlRequest: URLRequest, responseData data: Data) throws -> Data {
         let interceptedData = intercept(response: response, data: data, request: urlRequest)
-        return interceptedData ?? data
+        let finalData = interceptedData ?? data
+        try requireSuccess(response: response, data: finalData)
+        return finalData
     }
     
     func interceptAndDecodeRaw(response: URLResponse?, urlRequest: URLRequest, error: Error?, responseData data: Data?) throws -> Data {
         let interceptedData = intercept(response: response, data: data, request: urlRequest)
-        return try unwrap(error: error, originalData: data, interceptedData: interceptedData)
+        let unwrappedData = try unwrap(error: error, originalData: data, interceptedData: interceptedData)
+        try requireSuccess(response: response, data: unwrappedData)
+        return unwrappedData
+    }
+    
+    /// A body is a result only when the status says the request succeeded;
+    /// otherwise it is reported as the error it describes, or as its status.
+    private func requireSuccess(response: URLResponse?, data: Data) throws {
+        guard let response = response as? HTTPURLResponse,
+              !HTTPStatusCodes.successful.contains(response.statusCode) else {
+            return
+        }
+        if let decodedError = JSONResponseErrorDecoder(decoder: JSONDecoder()).decodeErrorResponse(data: data) {
+            throw decodedError
+        }
+        throw OpenAIError.statusError(response: response, statusCode: response.statusCode)
     }
     
     private func decodeJson<ResultType: Codable>(data: Data) throws -> ResultType {

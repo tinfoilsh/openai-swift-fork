@@ -14,7 +14,7 @@ struct JSONResponseErrorDecoder {
         if let decoded = try? decoder.decode(APIErrorResponse.self, from: data) {
             return decoded
         } else if let decoded = try? decoder.decode([GeminiAPIErrorResponse].self, from: data) {
-            return decoded[0]
+            return decoded.first
         } else {
             return nil
         }

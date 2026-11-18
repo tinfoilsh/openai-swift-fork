@@ -99,6 +99,49 @@ final class StreamingSessionTests: XCTestCase {
         XCTAssertNil(recorder.completionError)
         XCTAssertEqual(recorder.completionCallCount, 1)
     }
+
+    func testBodyOfAnUnsuccessfulStatusIsNotStreamedAsContent() throws {
+        for status in [300, 404, 500] {
+            let recorder = StreamingSessionCallbackRecorder()
+            let session = StreamingSession(
+                urlSessionFactory: MockURLSessionFactory(),
+                urlRequest: .init(url: .init(string: "/")!),
+                interpreter: streamInterpreter,
+                sslDelegate: nil,
+                middlewares: [],
+                executionSerializer: NoDispatchExecutionSerializer(),
+                onReceiveContent: { _, _ in
+                    recorder.contentCallCount += 1
+                },
+                onProcessingError: { _, error in
+                    recorder.processingError = error
+                },
+                onComplete: { _, error in
+                    recorder.completionError = error
+                    recorder.completionCallCount += 1
+                }
+            )
+            let urlSession = URLSessionMock()
+            let dataTask = DataTaskMock()
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: URL(string: "https://example.com/v1/chat/completions")!,
+                statusCode: status,
+                httpVersion: nil,
+                headerFields: nil
+            ))
+
+            session.urlSession(urlSession, dataTask: dataTask, didReceive: response) { _ in }
+            session.urlSession(urlSession, dataTask: dataTask, didReceive: Data("data: {}\n\n".utf8))
+            session.urlSession(urlSession, task: dataTask, didCompleteWithError: nil)
+
+            XCTAssertEqual(recorder.contentCallCount, 0, "status \(status)")
+            guard case .statusError(_, let statusCode)? = recorder.processingError as? OpenAIError else {
+                return XCTFail("Expected a status error for \(status), got \(String(describing: recorder.processingError))")
+            }
+            XCTAssertEqual(statusCode, status)
+            XCTAssertEqual(recorder.completionCallCount, 1)
+        }
+    }
 }
 
 class MockDataStreamInterpreter: StreamInterpreter, @unchecked Sendable {
@@ -121,5 +164,6 @@ private final class StreamingSessionCallbackRecorder: @unchecked Sendable {
     var processingError: Error?
     var completionError: Error?
     var completionCallCount = 0
+    var contentCallCount = 0
     var disposition: URLSession.ResponseDisposition?
 }
