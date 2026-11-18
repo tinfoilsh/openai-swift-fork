@@ -49,6 +49,13 @@ extension DataTaskMock {
         return task
     }
     
+    static func response(with data: Data, statusCode: Int) -> DataTaskMock {
+        let task = DataTaskMock()
+        task.data = data
+        task.response = HTTPURLResponse(url: URL(fileURLWithPath: ""), statusCode: statusCode, httpVersion: nil, headerFields: nil)
+        return task
+    }
+    
     static func failed(with error: Error) -> DataTaskMock {
         let task = DataTaskMock()
         task.error = error

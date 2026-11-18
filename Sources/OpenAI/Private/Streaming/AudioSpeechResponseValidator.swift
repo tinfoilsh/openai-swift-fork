@@ -5,7 +5,6 @@ import FoundationNetworking
 
 struct AudioSpeechResponseValidator: Sendable {
     static let maximumErrorBodyBytes = 64 * 1024
-    static let successStatusCodes = 200..<300
     static let minimumErrorStatusCode = 400
     private static let binaryContentType = "application/octet-stream"
     private static let audioContentTypePrefix = "audio/"
@@ -16,7 +15,7 @@ struct AudioSpeechResponseValidator: Sendable {
         guard let response = response as? HTTPURLResponse else {
             throw AudioSpeechStreamError.invalidResponse
         }
-        guard Self.successStatusCodes.contains(response.statusCode) else {
+        guard HTTPStatusCodes.successful.contains(response.statusCode) else {
             throw OpenAIError.statusError(response: response, statusCode: response.statusCode)
         }
         let rawContentType = response.value(forHTTPHeaderField: "Content-Type")

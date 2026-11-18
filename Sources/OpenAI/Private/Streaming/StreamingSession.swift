@@ -156,7 +156,7 @@ final class StreamingSession<Interpreter: StreamInterpreter>: NSObject, Identifi
                     return
                 }
             }
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
+            if let httpResponse = response as? HTTPURLResponse, !HTTPStatusCodes.successful.contains(httpResponse.statusCode) {
                 self.errorResponse = httpResponse
             }
             completionHandler(.allow)
